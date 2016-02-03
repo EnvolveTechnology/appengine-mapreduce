@@ -43,6 +43,7 @@ except ImportError:
 from google.appengine.api import datastore
 from google.appengine.ext import db
 from google.appengine.runtime import apiproxy_errors
+from google.appengine.api import namespace_manager
 
 
 # Maximum number of items. Pool will be flushed when reaches this amount.
@@ -246,8 +247,18 @@ class _MutationPool(Pool):
                               repr_function=self._ndb_repr)
     self.ndb_deletes = _ItemList(max_entity_count,
                                  self._flush_ndb_deletes)
+    self.ns_ndb_puts = {}
 
-  def put(self, entity):
+  def _get_ndb_puts(self, namespace):
+    if not namespace:
+      return self.ndb_puts
+    return self.ns_ndb_puts.get(
+      namespace, _ItemList(
+        self.max_entity_count,
+        self._flush_ndb_puts,
+        repr_function=self._ndb_repr))
+
+  def put(self, entity, namespace=None):
     """Registers entity to put to datastore.
 
     Args:
@@ -255,15 +266,13 @@ class _MutationPool(Pool):
     """
     actual_entity = _normalize_entity(entity)
     if actual_entity is None:
-      # TODO ndb Puts get flushed here
-      return self.ndb_put(entity)
-    self.puts.append(actual_entity)
+      return self.ndb_put(entity, namespace)
+    self.puts.append(actual_entity)  # TODO does this need namespace?
 
-  def ndb_put(self, entity):
+  def ndb_put(self, entity, namespace):
     """Like put(), but for NDB entities."""
     assert ndb is not None and isinstance(entity, ndb.Model)
-    # TODO ndb Puts get flushed here
-    self.ndb_puts.append(entity)
+    self._get_ndb_puts(namespace).append(entity)
 
   def delete(self, entity):
     """Registers entity to delete from datastore.
@@ -290,6 +299,8 @@ class _MutationPool(Pool):
     self.puts.flush()
     self.deletes.flush()
     self.ndb_puts.flush()
+    for ns_puts_ in self.ns_ndb_puts:
+      ns_puts_.flush()
     self.ndb_deletes.flush()
 
   @classmethod
@@ -315,6 +326,17 @@ class _MutationPool(Pool):
       Proto in str.
     """
     return str(entity._to_pb())
+
+  def _ns_flush_puts(self, namespace):
+    """Flush all puts to datastore."""
+    def flush(instance, items, options):
+      previous_namespace = namespace
+      try:
+        namespace_manager.set_namespace(namespace)
+        self._flush_puts(items, options)
+      finally:
+        namespace_manager.set_namespace(previous_namespace)
+    return flush
 
   def _flush_puts(self, items, options):
     """Flush all puts to datastore."""
