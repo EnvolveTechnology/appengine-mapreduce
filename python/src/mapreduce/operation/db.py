@@ -32,13 +32,14 @@ class Put(base.Operation):
   See mapreduce.context._MutationPool.
   """
 
-  def __init__(self, entity):
+  def __init__(self, entity, namespace=None):
     """Constructor.
 
     Args:
       entity: an entity to put.
     """
     self.entity = entity
+    self.namespace = namespace
 
   def __call__(self, context):
     """Perform operation.
@@ -46,7 +47,7 @@ class Put(base.Operation):
     Args:
       context: mapreduce context as context.Context.
     """
-    context._mutation_pool.put(self.entity)
+    context._mutation_pool.put(self.entity, namespace=self.namespace)
 
 
 class Delete(base.Operation):
@@ -55,13 +56,14 @@ class Delete(base.Operation):
   See mapreduce.context._MutationPool.
   """
 
-  def __init__(self, entity):
+  def __init__(self, entity, ):
     """Constructor.
 
     Args:
       entity: a key or model instance to delete.
     """
     self.entity = entity
+
 
   def __call__(self, context):
     """Perform operation.
