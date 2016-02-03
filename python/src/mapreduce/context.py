@@ -139,6 +139,7 @@ class _ItemList(object):
       item: an item to add to the list.
     """
     if self.should_flush():
+      # TODO ndb Puts get flushed here
       self.flush()
     self.items.append(item)
 
@@ -254,12 +255,14 @@ class _MutationPool(Pool):
     """
     actual_entity = _normalize_entity(entity)
     if actual_entity is None:
+      # TODO ndb Puts get flushed here
       return self.ndb_put(entity)
     self.puts.append(actual_entity)
 
   def ndb_put(self, entity):
     """Like put(), but for NDB entities."""
     assert ndb is not None and isinstance(entity, ndb.Model)
+    # TODO ndb Puts get flushed here
     self.ndb_puts.append(entity)
 
   def delete(self, entity):
@@ -283,6 +286,7 @@ class _MutationPool(Pool):
 
   def flush(self):
     """Flush(apply) all changed to datastore."""
+    # TODO ndb Puts get flushed here
     self.puts.flush()
     self.deletes.flush()
     self.ndb_puts.flush()
