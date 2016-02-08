@@ -334,7 +334,7 @@ class _MutationPool(Pool):
 
   def _ns_flush_puts(self, namespace):
     """Flush all puts to datastore."""
-    def flush(instance, items, options):
+    def flush(items, options):
       previous_namespace = namespace_manager.get_namespace()
       try:
         namespace_manager.set_namespace(namespace)
