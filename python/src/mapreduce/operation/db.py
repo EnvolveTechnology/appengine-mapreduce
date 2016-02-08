@@ -56,7 +56,7 @@ class Delete(base.Operation):
   See mapreduce.context._MutationPool.
   """
 
-  def __init__(self, entity, ):
+  def __init__(self, entity):
     """Constructor.
 
     Args:
