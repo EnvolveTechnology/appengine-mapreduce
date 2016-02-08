@@ -252,11 +252,15 @@ class _MutationPool(Pool):
   def _get_ndb_puts(self, namespace):
     if not namespace:
       return self.ndb_puts
-    return self.ns_ndb_puts.get(
-      namespace, _ItemList(
+    item_list = self.ns_ndb_puts.get(
+      namespace)
+    if not item_list:
+      item_list = _ItemList(
         self.max_entity_count,
-        self._ns_flush_puts,
-        repr_function=self._ndb_repr))
+        self._ns_flush_puts(namespace),
+        repr_function=self._ndb_repr)
+      self.ns_ndb_puts[namespace] = item_list
+    return item_list
 
   def put(self, entity, namespace=None):
     """Registers entity to put to datastore.
@@ -299,8 +303,9 @@ class _MutationPool(Pool):
     self.puts.flush()
     self.deletes.flush()
     self.ndb_puts.flush()
-    for ns_puts_ in self.ns_ndb_puts:
-      ns_puts_.flush()
+    if self.ns_ndb_puts:
+      for (_, ns_puts_) in self.ns_ndb_puts.iteritems():
+        ns_puts_.flush()
     self.ndb_deletes.flush()
 
   @classmethod
@@ -333,7 +338,7 @@ class _MutationPool(Pool):
       previous_namespace = namespace_manager.get_namespace()
       try:
         namespace_manager.set_namespace(namespace)
-        self._flush_puts(items, options)
+        self._flush_ndb_puts(items, options)
       finally:
         namespace_manager.set_namespace(previous_namespace)
     return flush
