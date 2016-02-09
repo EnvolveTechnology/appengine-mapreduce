@@ -292,7 +292,7 @@ class _MutationPool(Pool):
     assert ndb is not None and isinstance(entity, ndb.Model)
     self._get_ndb_puts(namespace).append(entity)
 
-  def delete(self, entity):
+  def delete(self, entity, namespace=None):
     """Registers entity to delete from datastore.
 
     Args:
@@ -300,7 +300,7 @@ class _MutationPool(Pool):
     """
     key = _normalize_key(entity)
     if key is None:
-      return self.ndb_delete(entity)
+      return self.ndb_delete(entity, namespace)
     self.deletes.append(key)
 
   def ndb_delete(self, entity_or_key, namespace=None):
