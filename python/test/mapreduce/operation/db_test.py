@@ -41,7 +41,7 @@ class PutTest(unittest.TestCase):
     operation = op.db.Put(entity)
 
     # Record calls
-    ctx._mutation_pool.put(entity)
+    ctx._mutation_pool.put(entity, namespace=None)
 
     m.ReplayAll()
     try:  # test, verify
