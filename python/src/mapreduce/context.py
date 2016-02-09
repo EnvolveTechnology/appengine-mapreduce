@@ -248,6 +248,7 @@ class _MutationPool(Pool):
     self.ndb_deletes = _ItemList(max_entity_count,
                                  self._flush_ndb_deletes)
     self.ns_ndb_puts = {}
+    self.ns_ndb_deletes = {}
 
   def _get_ndb_puts(self, namespace):
     if not namespace:
@@ -260,6 +261,19 @@ class _MutationPool(Pool):
         self._ns_ndb_flush_puts(namespace),
         repr_function=self._ndb_repr)
       self.ns_ndb_puts[namespace] = item_list
+    return item_list
+
+  def _get_ndb_deletes(self, namespace):
+    if not namespace:
+      return self.ndb_deletes
+    item_list = self.ns_ndb_deletes.get(
+      namespace)
+    if not item_list:
+      item_list = _ItemList(
+        self.max_entity_count,
+        self._ns_ndb_flush_puts(namespace),
+        repr_function=self._ndb_repr)
+      self.ns_ndb_deletes[namespace] = item_list
     return item_list
 
   def put(self, entity, namespace=None):
@@ -289,13 +303,13 @@ class _MutationPool(Pool):
       return self.ndb_delete(entity)
     self.deletes.append(key)
 
-  def ndb_delete(self, entity_or_key):
+  def ndb_delete(self, entity_or_key, namespace=None):
     """Like delete(), but for NDB entities/keys."""
     if ndb is not None and isinstance(entity_or_key, ndb.Model):
       key = entity_or_key.key
     else:
       key = entity_or_key
-    self.ndb_deletes.append(key)
+    self._get_ndb_deletes(namespace).append(key)
 
   def flush(self):
     """Flush(apply) all changed to datastore."""
@@ -307,6 +321,9 @@ class _MutationPool(Pool):
       for (_, ns_puts_) in self.ns_ndb_puts.iteritems():
         ns_puts_.flush()
     self.ndb_deletes.flush()
+    if self.ns_ndb_deletes:
+      for (_, ns_deletes_) in self.ns_ndb_deletes.iteritems():
+        ns_deletes_.flush()
 
   @classmethod
   def _db_repr(cls, entity):
@@ -339,6 +356,17 @@ class _MutationPool(Pool):
       try:
         namespace_manager.set_namespace(namespace)
         self._flush_ndb_puts(items, options)
+      finally:
+        namespace_manager.set_namespace(previous_namespace)
+    return flush
+
+  def _ns_ndb_flush_deletes(self, namespace):
+    """Flush all deletes to datastore."""
+    def flush(items, options):
+      previous_namespace = namespace_manager.get_namespace()
+      try:
+        namespace_manager.set_namespace(namespace)
+        self._flush_ndb_deletes(items, options)
       finally:
         namespace_manager.set_namespace(previous_namespace)
     return flush
