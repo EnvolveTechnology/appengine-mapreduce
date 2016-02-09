@@ -65,7 +65,7 @@ class DeleteTest(unittest.TestCase):
     operation = op.db.Delete(entity)
 
     # Record calls
-    ctx._mutation_pool.delete(entity)
+    ctx._mutation_pool.delete(entity, namespace=None)
 
     m.ReplayAll()
     try:  # test, verify
