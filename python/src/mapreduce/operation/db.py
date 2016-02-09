@@ -56,13 +56,14 @@ class Delete(base.Operation):
   See mapreduce.context._MutationPool.
   """
 
-  def __init__(self, entity):
+  def __init__(self, entity, namespace=None):
     """Constructor.
 
     Args:
       entity: a key or model instance to delete.
     """
     self.entity = entity
+    self.namespace = namespace
 
 
   def __call__(self, context):
@@ -71,4 +72,4 @@ class Delete(base.Operation):
     Args:
       context: mapreduce context as context.Context.
     """
-    context._mutation_pool.delete(self.entity)
+    context._mutation_pool.delete(self.entity, namespace=self.namespace)
