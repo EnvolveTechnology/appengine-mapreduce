@@ -500,7 +500,7 @@ class MapperWorkerCallbackHandler(base_handler.HugeTaskHandler):
           return self.__return(shard_state, tstate, task_directive)
 
       last_slice = self._process_inputs(
-          tstate.input_reader, shard_state, tstate, ctx)  # TODO batched ndb Put here
+          tstate.input_reader, shard_state, tstate, ctx)
 
       self._lc_end_slice(tstate, slice_id)
 
@@ -590,7 +590,7 @@ class MapperWorkerCallbackHandler(base_handler.HugeTaskHandler):
       processing_limit -= 1
 
       if not self._process_datum(
-          entity, input_reader, ctx, tstate):  # TODO batched ndb Put here
+          entity, input_reader, ctx, tstate):
         finished_shard = False
         break
       elif processing_limit == 0:
@@ -634,7 +634,7 @@ class MapperWorkerCallbackHandler(base_handler.HugeTaskHandler):
         if util.is_generator(result):
           for output in result:
             if isinstance(output, operation.Operation):
-              output(ctx)  # TODO batched ndb Put
+              output(ctx)
             else:
               output_writer = transient_shard_state.output_writer
               if not output_writer:
