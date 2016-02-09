@@ -257,7 +257,7 @@ class _MutationPool(Pool):
     if not item_list:
       item_list = _ItemList(
         self.max_entity_count,
-        self._ns_flush_puts(namespace),
+        self._ns_ndb_flush_puts(namespace),
         repr_function=self._ndb_repr)
       self.ns_ndb_puts[namespace] = item_list
     return item_list
@@ -332,7 +332,7 @@ class _MutationPool(Pool):
     """
     return str(entity._to_pb())
 
-  def _ns_flush_puts(self, namespace):
+  def _ns_ndb_flush_puts(self, namespace):
     """Flush all puts to datastore."""
     def flush(items, options):
       previous_namespace = namespace_manager.get_namespace()
