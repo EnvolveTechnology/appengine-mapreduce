@@ -273,7 +273,7 @@ class _MutationPool(Pool):
       return self.ndb_put(entity, namespace)
     self.puts.append(actual_entity)  # TODO does this need namespace?
 
-  def ndb_put(self, entity, namespace):
+  def ndb_put(self, entity, namespace=None):
     """Like put(), but for NDB entities."""
     assert ndb is not None and isinstance(entity, ndb.Model)
     self._get_ndb_puts(namespace).append(entity)
